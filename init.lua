@@ -44,6 +44,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
+  { 'projekt0n/github-nvim-theme' },
   {
     "nvim-telescope/telescope.nvim",
     tag = "0.1.6",
@@ -101,17 +102,7 @@ local plugins = {
       -- See Configuration section for rest
     },
     -- See Commands section for default commands if you want to lazy load on them
-  },
-  { 'shaunsingh/nord.nvim' },
-  {
-    "xero/miasma.nvim",
-    lazy = false,
-    priority = 1000,
-    config = function()
-      vim.cmd("colorscheme miasma")
-    end
-  },
-  { 'rktjmp/lush.nvim' }
+  }
 }
 
 require("lazy").setup(plugins, {})
@@ -165,3 +156,5 @@ vim.api.nvim_set_keymap('n', '<leader>l', [[:lua vim.fn.setreg('+', vim.fn.expan
 
 -- run rspec in terminal
 vim.api.nvim_set_keymap('n', '<leader>p', ':terminal bundle exec rspec %<CR>', {noremap = true})
+
+vim.cmd('colorscheme github_dark')
