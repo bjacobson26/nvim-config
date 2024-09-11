@@ -44,7 +44,13 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
-  { 'projekt0n/github-nvim-theme' },
+  {
+    "folke/tokyonight.nvim",
+    lazy = false,
+    priority = 1000,
+    opts = {},
+  },
+  { 'mg979/vim-visual-multi' },
   {
     "nvim-telescope/telescope.nvim",
     tag = "0.1.6",
@@ -102,12 +108,56 @@ local plugins = {
       -- See Configuration section for rest
     },
     -- See Commands section for default commands if you want to lazy load on them
+  },
+  {
+    'nvim-lualine/lualine.nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' }
   }
 }
 
 require("lazy").setup(plugins, {})
 
-require("codetime").initialize()
+
+require('lualine').setup {
+  options = {
+    icons_enabled = true,
+    theme = 'auto',
+    component_separators = { left = '', right = ''},
+    section_separators = { left = '', right = ''},
+    disabled_filetypes = {
+      statusline = {},
+      winbar = {},
+    },
+    ignore_focus = {},
+    always_divide_middle = true,
+    globalstatus = false,
+    refresh = {
+      statusline = 1000,
+      tabline = 1000,
+      winbar = 1000,
+    }
+  },
+  sections = {
+    lualine_a = {'mode'},
+    lualine_b = {'branch', 'diff', 'diagnostics'},
+    lualine_c = { { 'filename', path = 1 } },
+    lualine_x = {'encoding', 'fileformat', 'filetype'},
+    lualine_y = {'progress'},
+    lualine_z = {'location'}
+  },
+  inactive_sections = {
+    lualine_a = {},
+    lualine_b = {},
+    lualine_c = {'filename'},
+    lualine_x = {'location'},
+    lualine_y = {},
+    lualine_z = {}
+  },
+  tabline = {},
+  winbar = {},
+  inactive_winbar = {},
+  extensions = {}
+}
 
 require'nvim-treesitter.configs'.setup {
   ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "ruby", "typescript", "javascript", "json", "yaml", "html", "css" },
@@ -157,4 +207,5 @@ vim.api.nvim_set_keymap('n', '<leader>l', [[:lua vim.fn.setreg('+', vim.fn.expan
 -- run rspec in terminal
 vim.api.nvim_set_keymap('n', '<leader>p', ':terminal bundle exec rspec %<CR>', {noremap = true})
 
-vim.cmd('colorscheme github_dark')
+-- set color scheme
+vim.cmd.colorscheme "tokyonight-night"
