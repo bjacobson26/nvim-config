@@ -1,16 +1,24 @@
 -- disable netrw at the very start of your init.lua
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
-vim.o.termguicolors = true
+-- vim.o.termguicolors = true
 
 vim.cmd("set expandtab")
 vim.cmd("set tabstop=2")
 vim.cmd("set softtabstop=2")
 vim.cmd("set shiftwidth=2")
 vim.cmd("set number")
-vim.cmd("set colorcolumn=120")
+-- vim.cmd("set colorcolumn=120")
 vim.cmd("set clipboard=unnamedplus")
-vim.g.mapleader = ","
+
+-- set mapleader to space
+vim.g.mapleader = " "
+
+vim.opt.relativenumber = true
+vim.opt.number = true
+
+-- open tab using <C-M>
+vim.api.nvim_set_keymap('n', '<C-M>', '<C-T>', { noremap = true, silent = true })
 
 vim.opt.signcolumn = "yes"
 vim.api.nvim_create_autocmd("FileType", {
@@ -45,12 +53,16 @@ vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
   {
-    "folke/tokyonight.nvim",
+    'AlexvZyl/nordic.nvim',
     lazy = false,
     priority = 1000,
-    opts = {},
+    config = function()
+        require('nordic').load()
+    end
   },
-  { 'mg979/vim-visual-multi' },
+  {
+    'numToStr/Comment.nvim'
+  },
   {
     "nvim-telescope/telescope.nvim",
     tag = "0.1.6",
@@ -70,24 +82,6 @@ local plugins = {
     config = function()
       require("nvim-tree").setup({})
     end,
-  },
-  {
-    "nvim-neotest/neotest",
-    dependencies = {
-      "nvim-neotest/nvim-nio",
-      "nvim-lua/plenary.nvim",
-      "antoinemadec/FixCursorHold.nvim",
-      "nvim-treesitter/nvim-treesitter",
-      "olimorris/neotest-rspec",
-    },
-    config = function()
-      require("neotest").setup({
-        adapters = {
-          require("neotest-rspec")
-        },
-        ouput = { enabled = true, open_on_run = true },
-      })
-    end
   },
   {
     "github/copilot.vim",
@@ -112,16 +106,25 @@ local plugins = {
   {
     'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' }
+  },
+  { "mogulla3/rspec.nvim" },
+  {
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" }
   }
 }
 
 require("lazy").setup(plugins, {})
 
+require('Comment').setup()
+
+require('rspec').setup()
 
 require('lualine').setup {
   options = {
     icons_enabled = true,
-    theme = 'auto',
+    theme = 'nordic',
     component_separators = { left = '', right = ''},
     section_separators = { left = '', right = ''},
     disabled_filetypes = {
@@ -163,11 +166,31 @@ require'nvim-treesitter.configs'.setup {
   ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "ruby", "typescript", "javascript", "json", "yaml", "html", "css" },
   highlight = {
     enable = true
-  }
+  },
+  fold = { enable = true }
 }
+
+-- Enable Treesitter-based folding
+require'nvim-treesitter.configs'.setup {
+  highlight = { enable = true },
+  indent = { enable = true },
+  fold = {
+    enable = true,
+  },
+}
+
+-- Set foldmethod to 'expr' for Treesitter folding
+vim.opt.foldmethod = 'expr'
+vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+-- Disable auto-folding by default when opening files
+vim.opt.foldlevelstart = 99  -- This ensures that all folds are open when you open a file
+
 
 local telescope = require("telescope")
 telescope.setup {
+  defaults = {
+    file_ignore_patterns = { ".git/" },
+  },
   pickers = {
     find_files = {
       find_command = { 'rg', '--files', '--iglob', '!.git', '--hidden' },
@@ -181,10 +204,36 @@ telescope.setup {
   }
 }
 
-local builtin = require("telescope.builtin")
 
+local harpoon = require('harpoon')
+harpoon:setup()
+vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
+vim.keymap.set("n", "<leader>h", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+
+--
+-- -- basic telescope configuration
+-- local conf = require("telescope.config").values
+-- local function toggle_telescope(harpoon_files)
+--     local file_paths = {}
+--     for _, item in ipairs(harpoon_files.items) do
+--         table.insert(file_paths, item.value)
+--     end
+--
+--     require("telescope.pickers").new({}, {
+--         prompt_title = "Harpoon",
+--         finder = require("telescope.finders").new_table({
+--             results = file_paths,
+--         }),
+--         previewer = conf.file_previewer({}),
+--         sorter = conf.generic_sorter({}),
+--     }):find()
+-- end
+-- vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
+-- vim.keymap.set("n", "<leader>h", function() toggle_telescope(harpoon:list()) end, { desc = "Open harpoon window" })
+--
+local builtin = require("telescope.builtin")
 -- find files
-vim.keymap.set('n', '<C-p>', builtin.find_files, {})
+vim.keymap.set('n', '<leader>p', builtin.find_files, {})
 
 -- search in files
 vim.keymap.set('n', '<leader>f', builtin.live_grep, {})
@@ -192,20 +241,19 @@ vim.keymap.set('n', '<leader>f', builtin.live_grep, {})
 -- toggle nvim-tree
 vim.api.nvim_set_keymap('n', '<leader>n', ':NvimTreeToggle<CR>', {noremap = true, silent = true})
 
--- run tests with neotest
-vim.api.nvim_set_keymap('n', '<leader>t', ':lua require("neotest").run.run(vim.fn.expand("%"))<CR>', {noremap = true, silent = true})
-
--- pretty print json with :%!jq
-vim.api.nvim_set_keymap('n', '<leader>j', ':%!jq<CR>', {noremap = true, silent = true})
-
 -- find file in nvim-tree
 vim.api.nvim_set_keymap('n', '<leader>m', ':NvimTreeFindFile<CR>', {noremap = true, silent = true})
 
 -- copy file path to clipboard
 vim.api.nvim_set_keymap('n', '<leader>l', [[:lua vim.fn.setreg('+', vim.fn.expand('%:p'))<CR>]], { noremap = true, silent = true })
 
--- run rspec in terminal
-vim.api.nvim_set_keymap('n', '<leader>p', ':terminal bundle exec rspec %<CR>', {noremap = true})
+-- RSpec
+vim.keymap.set("n", "<leader>rn", ":RSpecNearest<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>rf", ":RSpecCurrentFile<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>rr", ":RSpecRerun<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>rF", ":RSpecOnlyFailures<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>rs", ":RSpecShowLastResult<CR>", { noremap = true, silent = true })
 
 -- set color scheme
-vim.cmd.colorscheme "tokyonight-night"
+
+vim.cmd.colorscheme('nordic')
