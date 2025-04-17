@@ -53,20 +53,29 @@ vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
   {
-    'AlexvZyl/nordic.nvim',
-    lazy = false,
-    priority = 1000,
-    config = function()
-        require('nordic').load()
-    end
+    "olimorris/codecompanion.nvim",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+    },
   },
   {
-    'numToStr/Comment.nvim'
+    "rebelot/kanagawa.nvim",
+    config = function()
+      vim.cmd("colorscheme kanagawa")
+    end
   },
+  { 'numToStr/Comment.nvim' },
   {
     "nvim-telescope/telescope.nvim",
     tag = "0.1.6",
-    dependencies = { "nvim-lua/plenary.nvim" }
+    dependencies = {
+      "nvim-lua/plenary.nvim"
+    }
+  },
+  {
+    "3rd/image.nvim",
+    opts = {}
   },
   {
     "nvim-treesitter/nvim-treesitter",
@@ -80,7 +89,9 @@ local plugins = {
       "nvim-tree/nvim-web-devicons",
     },
     config = function()
-      require("nvim-tree").setup({})
+      require("nvim-tree").setup({
+        view = { adaptive_size = true }
+      })
     end,
   },
   {
@@ -89,19 +100,6 @@ local plugins = {
   },
   {
     'f-person/git-blame.nvim'
-  },
-  {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    branch = "canary",
-    dependencies = {
-      { "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
-      { "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
-    },
-    opts = {
-      debug = true, -- Enable debugging
-      -- See Configuration section for rest
-    },
-    -- See Commands section for default commands if you want to lazy load on them
   },
   {
     'nvim-lualine/lualine.nvim',
@@ -121,10 +119,20 @@ require('Comment').setup()
 
 require('rspec').setup()
 
+require("codecompanion").setup({
+  strategies = {
+    chat = { adapter = "copilot" },
+    inline = { adapter = "copilot" }
+  }
+})
+
+local codetime = require('codetime')
+codetime.initialize()
+
 require('lualine').setup {
   options = {
     icons_enabled = true,
-    theme = 'nordic',
+    theme = 'auto',
     component_separators = { left = '', right = ''},
     section_separators = { left = '', right = ''},
     disabled_filetypes = {
@@ -144,7 +152,7 @@ require('lualine').setup {
     lualine_a = {'mode'},
     lualine_b = {'branch', 'diff', 'diagnostics'},
     lualine_c = { { 'filename', path = 1 } },
-    lualine_x = {'encoding', 'fileformat', 'filetype'},
+    lualine_x = {'encoding', 'fileformat', 'filetype', codetime.current_code_time },
     lualine_y = {'progress'},
     lualine_z = {'location'}
   },
@@ -185,7 +193,6 @@ vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
 -- Disable auto-folding by default when opening files
 vim.opt.foldlevelstart = 99  -- This ensures that all folds are open when you open a file
 
-
 local telescope = require("telescope")
 telescope.setup {
   defaults = {
@@ -205,32 +212,13 @@ telescope.setup {
 }
 
 
+-- Harpoon
 local harpoon = require('harpoon')
 harpoon:setup()
 vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
 vim.keymap.set("n", "<leader>h", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
 
---
--- -- basic telescope configuration
--- local conf = require("telescope.config").values
--- local function toggle_telescope(harpoon_files)
---     local file_paths = {}
---     for _, item in ipairs(harpoon_files.items) do
---         table.insert(file_paths, item.value)
---     end
---
---     require("telescope.pickers").new({}, {
---         prompt_title = "Harpoon",
---         finder = require("telescope.finders").new_table({
---             results = file_paths,
---         }),
---         previewer = conf.file_previewer({}),
---         sorter = conf.generic_sorter({}),
---     }):find()
--- end
--- vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
--- vim.keymap.set("n", "<leader>h", function() toggle_telescope(harpoon:list()) end, { desc = "Open harpoon window" })
---
+-- Telescope
 local builtin = require("telescope.builtin")
 -- find files
 vim.keymap.set('n', '<leader>p', builtin.find_files, {})
@@ -247,13 +235,12 @@ vim.api.nvim_set_keymap('n', '<leader>m', ':NvimTreeFindFile<CR>', {noremap = tr
 -- copy file path to clipboard
 vim.api.nvim_set_keymap('n', '<leader>l', [[:lua vim.fn.setreg('+', vim.fn.expand('%:p'))<CR>]], { noremap = true, silent = true })
 
+-- open new file
+vim.api.nvim_set_keymap('n', '<leader>nf', ':enew<CR>', { noremap = true, silent = true })
+
 -- RSpec
 vim.keymap.set("n", "<leader>rn", ":RSpecNearest<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>rf", ":RSpecCurrentFile<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>rr", ":RSpecRerun<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>rF", ":RSpecOnlyFailures<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>rs", ":RSpecShowLastResult<CR>", { noremap = true, silent = true })
-
--- set color scheme
-
-vim.cmd.colorscheme('nordic')
