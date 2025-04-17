@@ -14,11 +14,8 @@ vim.g.mapleader = " "
 
 vim.opt.relativenumber = true
 vim.opt.number = true
-
--- open tab using <C-M>
-vim.api.nvim_set_keymap('n', '<C-M>', '<C-T>', { noremap = true, silent = true })
-
 vim.opt.signcolumn = "yes"
+
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "ruby",
   callback = function()
@@ -55,7 +52,7 @@ local plugins = {
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-treesitter/nvim-treesitter",
-    },
+    }
   },
   {
     "rebelot/kanagawa.nvim",
